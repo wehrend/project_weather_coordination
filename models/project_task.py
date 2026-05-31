@@ -23,7 +23,7 @@ class ProjectTask(models.Model):
             ('partner_id.city', '!=', False)
         ])
 
-1       # temposrary use this key
+1       # temporary use this key
         api_key = "95ec4ad84ef6491bb3b165529262504" 
         
         url_template = "https://api.weatherapi.com/v1/forecast.json?key={key}&q={city}&days=2&lang=de"

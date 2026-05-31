@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="ir_cron_weather_task_check" model="ir.cron">
+            <name>Project: Weather Forecast Task Checker</name>
+            <model_id ref="project.model_project_task"/>
+            <state>code</state>
+            <code>model.check_weather_and_update_tasks()</code>
+            <interval_number>4</interval_number> <!-- All 4 hours -->
+            <interval_type>hours</interval_type>
+            <numbercall>-1</numbercall> <!-- repeat all -->
+            <active>True</active>
+        </record>
+    </data>
+</odoo>
