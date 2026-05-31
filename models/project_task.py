@@ -34,19 +34,19 @@ class ProjectTask(models.Model):
 
             try:
                 response = requests.get(url_template.format(key=api_key, city=city), timeout=5)
+                _logger.info("response: " + str(response.status_code))
                 
                 if response.status_code == 200:
                     data = response.json()
-                    
                     # WeatherAPI liefert ein Array 'forecastday'. Index 1 ist der morgige Tag.
                     forecast_days = data.get('forecast', {}).get('forecastday', [])
-                    
+
                     if len(forecast_days) < 2:
                         continue
                         
                     tomorrow = forecast_days[1]
                     tomorrow_day = tomorrow.get('day', {})
-                    
+                    _logger.info("tomorrow_day: %s", tomorrow_day )
                     # Hier ziehen wir uns clevere Metriken für die Logik:
                     condition_text = tomorrow_day.get('condition', {}).get('text', 'Unbekannt')
                     will_it_rain = tomorrow_day.get('daily_will_it_rain', 0)  # 1 = Ja, 0 = Nein
@@ -54,13 +54,15 @@ class ProjectTask(models.Model):
                     avg_temp = tomorrow_day.get('avgtemp_c', 20.0)
                     
                     status_text = f"{condition_text} ({avg_temp}°C)"
-                    
+                    _logger.info("will it rain %s", will_it_rain)
+                    _logger.info(" will it snow %s", will_it_snow)
+                    _logger.info(" avg_temp %s", avg_temp  )
                     # Schwellenwert-Logik: Blockieren, wenn es morgen regnet/schneit ODER die Temp unter 0 Grad fällt
                     if will_it_rain == 1 or will_it_snow == 1 or avg_temp < 0:
                         task.write({
                             'weather_status': status_text,
                             'is_weather_blocked': True,
-                            'kanban_state': 'blocked'  # Roter Punkt im Odoo-Kanban
+                            # 'kanban_state': 'blocked'  # Roter Punkt im Odoo-Kanban
                         })
                         # Nachricht im Odoo-Chatter hinterlassen
                         task.message_post(body=(
