@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
+        <record id="ir_actions_server_weather_task_check" model="ir.actions.server">
+            <field name="name">Project: Weather Forecast Task Checker</field>
+            <field name="model_id" search="[('model', '=', 'project.task')]"/>
+            <field name="state">code</field>
+            <field name="code">model.check_weather_and_update_tasks()</field>
+        </record>
+
         <record id="ir_cron_weather_task_check" model="ir.cron">
-            <name>Project: Weather Forecast Task Checker</name>
-            <model_id ref="project.model_project_task"/>
-            <state>code</state>
-            <code>model.check_weather_and_update_tasks()</code>
-            <interval_number>4</interval_number> <!-- All 4 hours -->
-            <interval_type>hours</interval_type>
-            <numbercall>-1</numbercall> <!-- repeat all -->
-            <active>True</active>
+            <field name="ir_actions_server_id" ref="ir_actions_server_weather_task_check"/>
+            <field name="active" eval="True"/>
+            <field name="interval_number" eval="4"/>
+            <field name="interval_type">hours</field>
+            <field name="user_id" ref="base.user_root"/>
         </record>
     </data>
 </odoo>

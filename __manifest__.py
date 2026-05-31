@@ -7,7 +7,7 @@
     'author': 'Sven Wehrend',
     'depends': ['project', 'base'],
     'data': [
-        # 'data/ir_cron_data.xml',
+        'data/ir_cron_data.xml',
         'views/project_task_views.xml',
     ],
     'installable': True,
