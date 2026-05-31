@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo o-no-validation="1">
+    <record id="res_config_settings_view_form_weather" model="ir.ui.view">
+        <name>res.config.settings.view.form.inherit.weather</name>
+        <model>res.config.settings</model>
+        <inherit_id ref="project.res_config_settings_view_form"/>
+        <arch type="xml">
+            <xpath expr="//app[@name='project']" position="inside">
+                <block title="Wetter-Integration" name="weather_integration_setting_block">
+                    <setting id="weather_api_key_setting" string="Wetter API Konfiguration" help="Manage the API interface for automatic task locking.">
+                        <div class="content-group">
+                            <div class="row mt16">
+                                <label for="weather_api_key" class="col-lg-3 o_light_label"/>
+                                <field name="weather_api_key" password="True"/>
+                            </div>
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </arch>
+    </record>
+</odoo>

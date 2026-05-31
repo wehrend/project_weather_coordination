@@ -1,6 +1,5 @@
-# models/project_task.py
-import requests
 import logging
+import requests
 from odoo import models, fields, api
 
 _logger = logging.getLogger(__name__)
@@ -23,8 +22,20 @@ class ProjectTask(models.Model):
             ('partner_id.city', '!=', False)
         ])
 
-        # temporary use this key
-        api_key = "95ec4ad84ef6491bb3b165529262504" 
+        if not active_tasks:
+            _logger.info("No active tasks with valid customer city found for weather check.")
+            return
+
+        # 1. API-Key dynamisch aus den Systemeinstellungen holen
+        get_param = self.env['ir.config_parameter'].sudo().get_param
+        api_key = get_param('project_weather_coordination.weather_api_key')
+        
+        # Fallback auf deinen temporären Key, falls in der UI noch nichts gespeichert wurde
+        if not api_key:
+            _logger.warning("No Weather API Key found in settings. Using temporary fallback key.")
+            api_key = "95ec4ad84ef6491bb3b165529262504" 
+        else:
+            _logger.info("Weather API Key successfully loaded from system parameters.")
         
         url_template = "https://api.weatherapi.com/v1/forecast.json?key={key}&q={city}&days=2&lang=de"
 
@@ -34,7 +45,7 @@ class ProjectTask(models.Model):
 
             try:
                 response = requests.get(url_template.format(key=api_key, city=city), timeout=5)
-                _logger.info("response: " + str(response.status_code))
+                _logger.info("WeatherAPI response code: %s for city %s", response.status_code, city)
                 
                 if response.status_code == 200:
                     data = response.json()
@@ -46,27 +57,27 @@ class ProjectTask(models.Model):
                         
                     tomorrow = forecast_days[1]
                     tomorrow_day = tomorrow.get('day', {})
-                    _logger.info("tomorrow_day: %s", tomorrow_day )
-                    # Hier ziehen wir uns clevere Metriken für die Logik:
+                    _logger.debug("tomorrow_day data: %s", tomorrow_day)
+                    
+                    # Metriken für die Logik extrahieren
                     condition_text = tomorrow_day.get('condition', {}).get('text', 'Unbekannt')
                     will_it_rain = tomorrow_day.get('daily_will_it_rain', 0)  # 1 = Ja, 0 = Nein
                     will_it_snow = tomorrow_day.get('daily_will_it_snow', 0)  # 1 = Ja, 0 = Nein
                     avg_temp = tomorrow_day.get('avgtemp_c', 20.0)
                     
                     status_text = f"{condition_text} ({avg_temp}°C)"
-                    _logger.info("will it rain %s", will_it_rain)
-                    _logger.info(" will it snow %s", will_it_snow)
-                    _logger.info(" avg_temp %s", avg_temp  )
+                    _logger.info("Task ID %s (%s) - Rain: %s, Snow: %s, Avg Temp: %s", task.id, city, will_it_rain, will_it_snow, avg_temp)
+                    
                     # Schwellenwert-Logik: Blockieren, wenn es morgen regnet/schneit ODER die Temp unter 0 Grad fällt
                     if will_it_rain == 1 or will_it_snow == 1 or avg_temp < 0:
                         task.write({
                             'weather_status': status_text,
                             'is_weather_blocked': True,
-                            # 'kanban_state': 'blocked'  # Roter Punkt im Odoo-Kanban
+                            # 'kanban_state': 'blocked'  # Optional: Roter Punkt im Odoo-Kanban
                         })
                         # Nachricht im Odoo-Chatter hinterlassen
                         task.message_post(body=(
-                           f" Automatic bad weather warning for tomorrow: "
+                           f"<strong>Automatic bad weather warning for tomorrow:</strong><br/>"
                            f"The task has been blocked. Forecast for {city}: {condition_text}. "
                            f"Risk of rain or danger of frost ({avg_temp}°C)."
                         ))
@@ -78,7 +89,7 @@ class ProjectTask(models.Model):
                                 'kanban_state': 'normal'  # Grüner/Grauer Punkt (Bereit)
                             })
                             task.message_post(body=(
-                                f" Weather all-clear for tomorrow: "
+                                f"<strong>Weather all-clear for tomorrow:</strong><br/>"
                                 f"The forecast for {city} is good ({condition_text}, {avg_temp}°C). "
                                 f"The task has been released again."
                             ))
