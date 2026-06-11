@@ -30,10 +30,8 @@ class ProjectTask(models.Model):
         get_param = self.env['ir.config_parameter'].sudo().get_param
         api_key = get_param('project_weather_coordination.weather_api_key')
         
-        # Fallback auf deinen temporären Key, falls in der UI noch nichts gespeichert wurde
         if not api_key:
-            _logger.warning("No Weather API Key found in settings. Using temporary fallback key.")
-            api_key = "95ec4ad84ef6491bb3b165529262504" 
+            _logger.warning("No Weather API Key found in settings.")
         else:
             _logger.info("Weather API Key successfully loaded from system parameters.")
         
